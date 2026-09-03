@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chapters 4–6 Medical Terminology Jeopardy</title>
+<style>
+:root{
+  --pink:#9b4f6f; --deep:#482d3c; --pale:#fff7fa; --soft:#f8e2ed;
+  --gold:#f4c95d; --green:#5f8f72; --red:#a64d62;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#482d3c,#9b4f6f);color:#fff;min-height:100vh}
+button,input{font:inherit}
+.app{max-width:1250px;margin:auto;padding:20px}
+header{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:16px}
+h1{margin:0;font-size:clamp(24px,4vw,42px)}
+.subtitle{opacity:.9}
+.controls{display:flex;gap:8px;flex-wrap:wrap}
+button{border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}
+.primary{background:var(--soft);color:var(--deep)}
+.secondary{background:#fff;color:var(--deep)}
+.danger{background:#ffd9e2;color:#6e2439}
+.screen{display:none}.screen.active{display:block}
+.board{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:7px}
+.cat{background:var(--pink);padding:15px 8px;text-align:center;font-weight:800;border-radius:10px 10px 3px 3px;min-height:74px;display:flex;align-items:center;justify-content:center}
+.cell{min-height:85px;background:#fff;color:var(--pink);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;border-radius:5px;cursor:pointer}
+.cell:hover{transform:scale(1.02)}
+.cell.used{background:rgba(255,255,255,.18);color:rgba(255,255,255,.35);cursor:default;text-decoration:line-through}
+.scorebar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:15px 0}
+.team{background:#fff;color:var(--deep);border-radius:12px;padding:10px;text-align:center}
+.team .name{font-weight:800}.team .score{font-size:25px;font-weight:900;color:var(--pink)}
+.questionCard,.finalCard{background:var(--pale);color:var(--deep);border-radius:18px;padding:40px;text-align:center;max-width:950px;margin:35px auto}
+.value{font-size:30px;color:var(--pink);font-weight:900}.question{font-size:clamp(26px,4vw,46px);font-weight:800;margin:45px 0;line-height:1.15}
+.answer{font-size:clamp(25px,3.5vw,40px);font-weight:900;margin:35px 0}
+.actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.scoreActions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:20px}
+.correct{background:var(--green);color:white}.incorrect{background:var(--red);color:white}
+.notice{margin-top:14px;font-weight:700;color:#fff;text-align:center}
+.scorePage{background:var(--pale);color:var(--deep);border-radius:18px;padding:25px}
+.scoreGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
+.scoreBox{background:white;border:3px solid var(--pink);border-radius:16px;padding:18px;text-align:center}
+.scoreBox input{width:100%;padding:10px;border:2px solid #ddd;border-radius:8px;text-align:center;font-weight:700}
+.bigscore{font-size:38px;font-weight:900;color:var(--pink);margin:15px}
+.small{font-size:13px;color:#666}
+.wagerBox{background:white;border:2px solid var(--pink);border-radius:12px;padding:12px;margin-top:10px}
+.wagerBox input{width:100%;padding:9px;border:2px solid #ddd;border-radius:8px;text-align:center;font-weight:700;margin:5px 0}
+@media(max-width:850px){.board{grid-template-columns:repeat(3,1fr)}.scorebar,.scoreGrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.board{grid-template-columns:repeat(2,1fr)}.scorebar,.scoreGrid{grid-template-columns:1fr}.questionCard{padding:22px}.app{padding:10px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div><h1>Chapters 4–6 Jeopardy</h1><div class="subtitle">Medical Terminology • 4 Teams • 3 Students Each</div></div>
+  <div class="controls">
+    <button class="primary" id="scoreBtn">🏆 Scorekeeper</button>
+    <button class="secondary" id="resetBtn">↻ Reset Game</button>
+  </div>
+</header>
+
+<section id="boardScreen" class="screen active">
+  <div class="scorebar" id="scoreBar"></div>
+  <div class="board" id="board"></div>
+  <div class="notice" id="boardNotice"></div>
+</section>
+
+<section id="questionScreen" class="screen">
+  <div class="questionCard">
+    <div id="qCategory" class="subtitle"></div>
+    <div id="qValue" class="value"></div>
+    <div id="qText" class="question"></div>
+    <div class="actions"><button class="primary" id="revealBtn">REVEAL ANSWER</button><button class="secondary" id="qBoardBtn">BOARD</button></div>
+    <div id="answerArea" style="display:none">
+      <div id="qAnswer" class="answer"></div>
+      <div><strong>Who answered?</strong></div>
+      <div class="actions" id="teamChoice"></div>
+      <div class="scoreActions" id="scoreActions" style="display:none">
+        <button class="correct" id="correctBtn">✓ Correct</button>
+        <button class="incorrect" id="incorrectBtn">✗ Incorrect</button>
+        <button class="secondary" id="noScoreBtn">No Score</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="scoreScreen" class="screen">
+  <div class="scorePage">
+    <h2>🏆 Scorekeeper</h2>
+    <p>Edit team names and use the buttons to adjust scores.</p>
+    <div class="scoreGrid" id="scoreGrid"></div>
+    <div class="actions" style="margin-top:20px"><button class="primary" id="scoreBoardBtn">BACK TO BOARD</button></div>
+  </div>
+</section>
+
+<section id="finalScreen" class="screen">
+  <div class="finalCard">
+    <div class="value">⭐ FINAL JEOPARDY ⭐</div>
+    <div class="question">The term sublingual means pertaining to under the _______ .</div>
+    <p><strong>All 4 teams: write your wager and answer before the reveal.</strong></p>
+    <div class="actions">
+      <button class="primary" id="finalReveal">REVEAL ANSWER</button>
+      <button class="secondary" id="finalBoardBtn">BACK TO BOARD</button>
+    </div>
+    <div id="finalAnswer" style="display:none">
+      <div class="answer">What is tongue?</div>
+      <p><strong>Now enter each team's wager and choose whether they were correct.</strong></p>
+      <div id="finalTeams" class="scoreGrid"></div>
+      <div class="actions" style="margin-top:20px">
+        <button class="primary" id="finalScoreBtn">FINISH GAME</button>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<script>
+const data=[
+["🧩 PREFIX POWER",[
+["This prefix means “against.”","What is anti-?",100],
+["This prefix means “new.”","What is neo-?",200],
+["This prefix means “slow.”","What is brady-?",300],
+["This prefix means “between.”","What is inter-?",400],
+["This prefix means “beyond, change.”","What is meta-?",500]]],
+["🔍 WORD PART DETECTIVES",[
+["This combining form means “death.”","What is mort/o?",100],
+["This combining form means “infection.”","What is seps/o?",200],
+["This combining form means “skin.”","What is cutane/o?",300],
+["This combining form means “tongue.”","What is gloss/o?",400],
+["This suffix means “development, nourishment.”","What is -trophy?",500]]],
+["🍕 THE GI HIGHWAY",[
+["First part of the large intestine:","What is cecum?",100],
+["The process of swallowing:","What is deglutition?",200],
+["The tube connecting the throat to the stomach","What is the esophagus?",300],
+["The first part of the small intestine","What is the duodenum?",400],
+["Rhythmic contraction of tubular organs","What is peristalsis?",500]]],
+["👅 NAME THAT BODY PART",[
+["A combining form that means mouth","What is stomat/o?",100],
+["A combining form that means tooth","What is odont/o?",200],
+["The combining form that means gallbladder","What is cholecyst/o?",300],
+["The combining form that means liver","What is hepat/o?",400],
+["The combining form that means stomach","What is gastr/o?",500]]],
+["🚨 GI DRAMA",[
+["Abnormal accumulation of fluid in the abdomen","What is ascites?",100],
+["Black, tarry stools containing digested blood","What is melena?",200],
+["Difficulty in swallowing","What is dysphagia?",300],
+["Chronic inflammation of the colon with presence of ulcers","What is ulcerative colitis?",400],
+["Telescoping of the intestines","What is intussusception?",500]]],
+["🔐 CRACK THE CODE",[
+["A cholecystectomy is the removal of the _________","What is gallbladder?",100],
+["A colonoscopy is the visual examination of the _______.","What is the large intestine?",200],
+["A gastrostomy is a new opening of the ______ to the outside of the body.","What is the stomach?",300],
+["Gastroenteritis is inflammation of the stomach and ______.","What is the small intestine?",400],
+["Hepatomegaly is the enlargement of the _______.","What is liver?",500]]]
+];
+
+let used=new Set(), scores=[0,0,0,0], names=["Team 1","Team 2","Team 3","Team 4"];
+let current=null, selectedTeam=null;
+
+const $=id=>document.getElementById(id);
+function show(id){document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));$(id).classList.add("active");}
+function money(n){return "$"+n.toLocaleString();}
+function renderScores(){
+  $("scoreBar").innerHTML=scores.map((s,i)=>`<div class="team"><div class="name">${escapeHtml(names[i])}</div><div class="score">${money(s)}</div></div>`).join("");
+  $("scoreGrid").innerHTML=scores.map((s,i)=>`
+    <div class="scoreBox">
+      <input data-name="${i}" value="${escapeAttr(names[i])}">
+      <div class="bigscore">${money(s)}</div>
+      <button class="primary" data-add="${i}" data-v="100">+$100</button>
+      <button class="primary" data-add="${i}" data-v="200">+$200</button>
+      <button class="primary" data-add="${i}" data-v="500">+$500</button>
+      <br><br>
+      <button class="danger" data-add="${i}" data-v="-100">−$100</button>
+      <button class="danger" data-add="${i}" data-v="-200">−$200</button>
+      <button class="danger" data-add="${i}" data-v="-500">−$500</button>
+    </div>`).join("");
+  document.querySelectorAll("[data-name]").forEach(x=>x.addEventListener("input",e=>{names[+e.target.dataset.name]=e.target.value||("Team "+(+e.target.dataset.name+1));renderScores();}));
+  document.querySelectorAll("[data-add]").forEach(x=>x.addEventListener("click",e=>{scores[+e.currentTarget.dataset.add]+=+e.currentTarget.dataset.v;renderScores();}));
+}
+function renderBoard(){
+  let html="";
+  data.forEach((cat,c)=>{
+    html+=`<div class="cat">${cat[0]}</div>`;
+  });
+  for(let r=0;r<5;r++) data.forEach((cat,c)=>{
+    const key=c+"-"+r, q=cat[1][r];
+    html+=`<button class="cell ${used.has(key)?"used":""}" data-c="${c}" data-r="${r}" ${used.has(key)?"disabled":""}>${used.has(key)?"USED":money(q[2])}</button>`;
+  });
+  $("board").innerHTML=html;
+  document.querySelectorAll(".cell:not(.used)").forEach(b=>b.addEventListener("click",openQuestion));
+  const fj=document.createElement("button");
+  fj.className="cell";
+  fj.style.gridColumn="1 / -1";
+  fj.style.background="var(--gold)";
+  fj.style.color="var(--deep)";
+  fj.textContent="⭐ FINAL JEOPARDY ⭐";
+  fj.addEventListener("click",()=>show("finalScreen"));
+  $("board").appendChild(fj);
+}
+function openQuestion(e){
+  const c=+e.currentTarget.dataset.c,r=+e.currentTarget.dataset.r;
+  current={c,r,key:c+"-"+r,q:data[c][1][r]};
+  selectedTeam=null;
+  $("qCategory").textContent=data[c][0];
+  $("qValue").textContent=money(current.q[2]);
+  $("qText").textContent=current.q[0];
+  $("qAnswer").textContent=current.q[1];
+  $("answerArea").style.display="none";
+  $("scoreActions").style.display="none";
+  $("teamChoice").innerHTML="";
+  show("questionScreen");
+}
+$("revealBtn").addEventListener("click",()=>{
+  $("answerArea").style.display="block";
+  $("teamChoice").innerHTML=names.map((n,i)=>`<button class="secondary" data-team="${i}">${escapeHtml(n)}</button>`).join("");
+  document.querySelectorAll("[data-team]").forEach(b=>b.addEventListener("click",e=>{
+    selectedTeam=+e.currentTarget.dataset.team;
+    $("scoreActions").style.display="flex";
+  }));
+});
+function finishQuestion(delta){
+  if(selectedTeam!==null) scores[selectedTeam]+=delta;
+  used.add(current.key);
+  renderScores();renderBoard();show("boardScreen");
+  $("boardNotice").textContent=delta>0?`${names[selectedTeam]} earned ${money(delta)}!`:delta<0?`${names[selectedTeam]} lost ${money(-delta)}.`:"Question marked used.";
+  setTimeout(()=>$("boardNotice").textContent="",2500);
+}
+$("correctBtn").addEventListener("click",()=>finishQuestion(current.q[2]));
+$("incorrectBtn").addEventListener("click",()=>finishQuestion(-current.q[2]));
+$("noScoreBtn").addEventListener("click",()=>finishQuestion(0));
+$("qBoardBtn").addEventListener("click",()=>{used.add(current.key);renderBoard();show("boardScreen");});
+$("scoreBtn").addEventListener("click",()=>{renderScores();show("scoreScreen")});
+$("scoreBoardBtn").addEventListener("click",()=>{renderBoard();show("boardScreen")});
+$("finalReveal").addEventListener("click",()=>{
+  $("finalAnswer").style.display="block";
+  $("finalTeams").innerHTML=names.map((n,i)=>`
+    <div class="scoreBox">
+      <div style="font-weight:800;color:var(--pink)">${escapeHtml(n)}</div>
+      <div class="wagerBox">
+        <div><strong>Wager</strong></div>
+        <input type="number" min="0" step="100" value="0" id="wager-${i}">
+        <div class="actions">
+          <button class="correct" data-final-correct="${i}">✓ Correct</button>
+          <button class="incorrect" data-final-wrong="${i}">✗ Incorrect</button>
+        </div>
+        <div class="small" id="final-status-${i}">No result selected</div>
+      </div>
+    </div>`).join("");
+  document.querySelectorAll("[data-final-correct]").forEach(b=>b.addEventListener("click",e=>{
+    const i=+e.currentTarget.dataset.finalCorrect;
+    const wager=Math.max(0,Number($("wager-"+i).value)||0);
+    scores[i]+=wager;
+    $("final-status-"+i).textContent=`Added ${money(wager)}`;
+    renderScores();
+  }));
+  document.querySelectorAll("[data-final-wrong]").forEach(b=>b.addEventListener("click",e=>{
+    const i=+e.currentTarget.dataset.finalWrong;
+    const wager=Math.max(0,Number($("wager-"+i).value)||0);
+    scores[i]-=wager;
+    $("final-status-"+i).textContent=`Deducted ${money(wager)}`;
+    renderScores();
+  }));
+});
+$("finalScoreBtn").addEventListener("click",()=>{
+  renderScores();
+  show("scoreScreen");
+  alert("Final scores are updated. The team with the highest score wins!");
+});
+$("finalBoardBtn").addEventListener("click",()=>{renderBoard();show("boardScreen")});
+$("resetBtn").addEventListener("click",()=>{
+  if(confirm("Reset the board and all four team scores?")){
+    used.clear();scores=[0,0,0,0];names=["Team 1","Team 2","Team 3","Team 4"];renderScores();renderBoard();show("boardScreen");
+  }
+});
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));}
+function escapeAttr(s){return escapeHtml(s);}
+renderScores();renderBoard();
+</script>
+</body>
+</html>
